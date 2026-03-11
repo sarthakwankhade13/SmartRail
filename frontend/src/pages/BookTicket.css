@@ -1,0 +1,34 @@
+.booking-info {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 4px;
+  margin-bottom: 24px;
+}
+
+.booking-info p {
+  margin: 8px 0;
+  color: #666;
+}
+
+.passenger-form {
+  border: 1px solid #ddd;
+  padding: 16px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+
+.passenger-form h4 {
+  margin-bottom: 16px;
+  color: #333;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.btn-secondary {
+  margin-right: 12px;
+  margin-bottom: 16px;
+}

@@ -1,0 +1,49 @@
+.pnr-form {
+  max-width: 400px;
+  margin-bottom: 24px;
+}
+
+.pnr-result {
+  margin-top: 32px;
+}
+
+.pnr-result h3 {
+  margin-bottom: 16px;
+  color: #333;
+}
+
+.booking-details {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 4px;
+  margin-bottom: 24px;
+}
+
+.booking-details p {
+  margin: 8px 0;
+  color: #666;
+}
+
+.status-confirmed {
+  color: #27ae60;
+  font-weight: bold;
+}
+
+.passengers-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+}
+
+.passengers-table th,
+.passengers-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.passengers-table th {
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #333;
+}

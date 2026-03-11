@@ -1,0 +1,58 @@
+.trains-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.train-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.train-info h3 {
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.train-type {
+  color: #666;
+  font-size: 14px;
+}
+
+.train-details {
+  display: flex;
+  gap: 40px;
+  align-items: center;
+  flex: 1;
+}
+
+.time-info {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.arrow {
+  font-size: 24px;
+  color: #e74c3c;
+}
+
+.availability {
+  text-align: right;
+}
+
+.availability p {
+  margin: 4px 0;
+  color: #666;
+}
+
+.availability strong {
+  color: #333;
+}
