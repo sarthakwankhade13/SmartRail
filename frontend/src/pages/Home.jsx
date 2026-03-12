@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import './Home.css';
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 function Home() {
   const navigate = useNavigate();
@@ -11,6 +14,24 @@ function Home() {
     class: 'SL'
   });
   const [visibleCards, setVisibleCards] = useState([]);
+  const [stations, setStations] = useState([]);
+  const [filteredSourceStations, setFilteredSourceStations] = useState([]);
+  const [filteredDestStations, setFilteredDestStations] = useState([]);
+  const [showSourceDropdown, setShowSourceDropdown] = useState(false);
+  const [showDestDropdown, setShowDestDropdown] = useState(false);
+
+  // Fetch stations on component mount
+  useEffect(() => {
+    const fetchStations = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/stations`);
+        setStations(response.data);
+      } catch (error) {
+        console.error('Failed to fetch stations:', error);
+      }
+    };
+    fetchStations();
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -32,6 +53,47 @@ function Home() {
     
     return () => window.removeEventListener('scroll', handleScroll);
   }, [visibleCards]);
+
+  // Filter stations based on input
+  const handleSourceChange = (value) => {
+    setSearchData({...searchData, source: value.toUpperCase()});
+    if (value.length > 0) {
+      const filtered = stations.filter(station => 
+        station.station_code.toLowerCase().includes(value.toLowerCase()) ||
+        station.station_name.toLowerCase().includes(value.toLowerCase()) ||
+        station.station_city.toLowerCase().includes(value.toLowerCase())
+      ).slice(0, 10);
+      setFilteredSourceStations(filtered);
+      setShowSourceDropdown(true);
+    } else {
+      setShowSourceDropdown(false);
+    }
+  };
+
+  const handleDestChange = (value) => {
+    setSearchData({...searchData, destination: value.toUpperCase()});
+    if (value.length > 0) {
+      const filtered = stations.filter(station => 
+        station.station_code.toLowerCase().includes(value.toLowerCase()) ||
+        station.station_name.toLowerCase().includes(value.toLowerCase()) ||
+        station.station_city.toLowerCase().includes(value.toLowerCase())
+      ).slice(0, 10);
+      setFilteredDestStations(filtered);
+      setShowDestDropdown(true);
+    } else {
+      setShowDestDropdown(false);
+    }
+  };
+
+  const selectSourceStation = (station) => {
+    setSearchData({...searchData, source: station.station_code});
+    setShowSourceDropdown(false);
+  };
+
+  const selectDestStation = (station) => {
+    setSearchData({...searchData, destination: station.station_code});
+    setShowDestDropdown(false);
+  };
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -98,26 +160,60 @@ function Home() {
               <h2>BOOK TICKET</h2>
               <form onSubmit={handleSearch}>
                 <div className="form-row-inline">
-                  <div className="form-group">
+                  <div className="form-group autocomplete-wrapper">
                     <label>FROM</label>
                     <input
                       type="text"
-                      placeholder="Enter Station Code"
+                      placeholder="Enter Station Name or Code"
                       value={searchData.source}
-                      onChange={(e) => setSearchData({...searchData, source: e.target.value.toUpperCase()})}
+                      onChange={(e) => handleSourceChange(e.target.value)}
+                      onFocus={() => searchData.source && setShowSourceDropdown(true)}
+                      onBlur={() => setTimeout(() => setShowSourceDropdown(false), 200)}
                       required
                     />
+                    {showSourceDropdown && filteredSourceStations.length > 0 && (
+                      <div className="autocomplete-dropdown">
+                        {filteredSourceStations.map((station, index) => (
+                          <div 
+                            key={index} 
+                            className="autocomplete-item"
+                            onClick={() => selectSourceStation(station)}
+                          >
+                            <strong>{station.station_code}</strong> - {station.station_name}
+                            <br />
+                            <small>{station.station_city}</small>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <div className="swap-icon-inline">⇄</div>
-                  <div className="form-group">
+                  <div className="form-group autocomplete-wrapper">
                     <label>TO</label>
                     <input
                       type="text"
-                      placeholder="Enter Station Code"
+                      placeholder="Enter Station Name or Code"
                       value={searchData.destination}
-                      onChange={(e) => setSearchData({...searchData, destination: e.target.value.toUpperCase()})}
+                      onChange={(e) => handleDestChange(e.target.value)}
+                      onFocus={() => searchData.destination && setShowDestDropdown(true)}
+                      onBlur={() => setTimeout(() => setShowDestDropdown(false), 200)}
                       required
                     />
+                    {showDestDropdown && filteredDestStations.length > 0 && (
+                      <div className="autocomplete-dropdown">
+                        {filteredDestStations.map((station, index) => (
+                          <div 
+                            key={index} 
+                            className="autocomplete-item"
+                            onClick={() => selectDestStation(station)}
+                          >
+                            <strong>{station.station_code}</strong> - {station.station_name}
+                            <br />
+                            <small>{station.station_city}</small>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
 
