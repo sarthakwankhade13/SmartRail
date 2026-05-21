@@ -1,0 +1,107 @@
+.booking-info {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 4px;
+  margin-bottom: 24px;
+}
+
+.booking-info p {
+  margin: 8px 0;
+  color: #666;
+}
+
+.passenger-form {
+  border: 1px solid #ddd;
+  padding: 16px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+
+.passenger-form h4 {
+  margin-bottom: 16px;
+  color: #333;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.btn-secondary {
+  margin-right: 12px;
+  margin-bottom: 16px;
+}
+
+/* ── Fare Breakdown Card ── */
+.fare-breakdown-card {
+  background: linear-gradient(135deg, #f0f4ff, #fafbff);
+  border: 1.5px solid #c3d0f5;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.fare-breakdown-card h3 {
+  margin: 0 0 12px;
+  color: #2d3748;
+  font-size: 1rem;
+}
+
+.fare-route {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  color: #4a5568;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+}
+
+.fare-arrow {
+  color: #667eea;
+  font-size: 0.8rem;
+}
+
+.fare-breakdown-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fare-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.88rem;
+  color: #4a5568;
+  padding: 4px 0;
+  border-bottom: 1px dashed #e2e8f0;
+}
+
+.fare-row span:last-child {
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.fare-total {
+  border-top: 2px solid #c3d0f5;
+  border-bottom: none;
+  padding-top: 8px;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.fare-grand {
+  background: #667eea;
+  color: white !important;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-top: 6px;
+  border: none;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.fare-grand span {
+  color: white !important;
+}
