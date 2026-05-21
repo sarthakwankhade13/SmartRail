@@ -23,12 +23,14 @@ from routes.trains import trains_bp
 from routes.bookings import bookings_bp
 from routes.ai import ai_bp
 from routes.realtime import realtime_bp
+from routes.journey import journey_bp
 
 app.register_blueprint(auth_bp, url_prefix='/api/auth')
 app.register_blueprint(trains_bp, url_prefix='/api')
 app.register_blueprint(bookings_bp, url_prefix='/api')
 app.register_blueprint(ai_bp, url_prefix='/api/ai')
 app.register_blueprint(realtime_bp, url_prefix='/api/realtime')
+app.register_blueprint(journey_bp, url_prefix='/api/journey')
 
 
 @app.route('/api/health')

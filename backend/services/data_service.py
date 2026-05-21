@@ -101,9 +101,58 @@ def _get_station_name_to_code():
     return _station_name_to_code
 
 
+def _resolve_station_code(code, index):
+    """
+    Resolve a user-typed value to a valid schedule station code.
+    Handles: exact codes, city names, partial names.
+    """
+    if not code:
+        return code
+
+    code_upper = code.upper().strip()
+
+    # 1. Already a valid schedule code
+    if code_upper in index:
+        return code_upper
+
+    # 2. Exact station name match
+    name_idx = _get_station_name_to_code()
+    if code_upper in name_idx:
+        return name_idx[code_upper]
+
+    # 3. Partial name match
+    for name, stn_code in name_idx.items():
+        if name.startswith(code_upper) or code_upper in name:
+            return stn_code
+
+    return code_upper
+
+def _resolve_all_station_codes(code, index):
+    """
+    Return all matching station codes for a query (e.g. all Mumbai stations).
+    """
+    if not code:
+        return []
+    code_upper = code.upper().strip()
+    results = set()
+    
+    if code_upper in index:
+        results.add(code_upper)
+        
+    name_idx = _get_station_name_to_code()
+    if code_upper in name_idx:
+        results.add(name_idx[code_upper])
+        
+    for name, stn_code in name_idx.items():
+        if name.startswith(code_upper) or code_upper in name:
+            results.add(stn_code)
+            
+    if not results:
+        results.add(code_upper)
+    return list(results)
+
 def find_station_by_code(code):
     return next((s for s in get_stations() if s.get('stnCode') == code), None)
-
 
 def find_train_by_number(train_number):
     return _get_trains_by_number().get(train_number)
@@ -118,13 +167,15 @@ def search_trains(source_code, dest_code, travel_date=None):
     index = _get_schedule_index()
 
     # Normalize: if the exact code isn't in schedules, try to find it via station.json name
-    source_code = _resolve_station_code(source_code, index)
-    dest_code = _resolve_station_code(dest_code, index)
+    source_codes = _resolve_all_station_codes(source_code, index)
+    dest_codes = _resolve_all_station_codes(dest_code, index)
 
     results = []
 
     # Use reverse index to only check trains that stop at source
-    candidate_trains = _get_station_trains_index().get(source_code, set())
+    candidate_trains = set()
+    for sc in source_codes:
+        candidate_trains.update(_get_station_trains_index().get(sc, set()))
 
     for train_number in candidate_trains:
         stops = index.get(train_number, [])
@@ -134,10 +185,10 @@ def search_trains(source_code, dest_code, travel_date=None):
         dst_stop = None
 
         for i, stop in enumerate(stops):
-            if stop['station_code'] == source_code and src_idx is None:
+            if stop['station_code'] in source_codes and src_idx is None:
                 src_idx = i
                 src_stop = stop
-            if stop['station_code'] == dest_code and src_idx is not None:
+            if stop['station_code'] in dest_codes and src_idx is not None:
                 dst_idx = i
                 dst_stop = stop
                 break

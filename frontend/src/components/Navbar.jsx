@@ -36,9 +36,9 @@ function Navbar() {
                 <Link to="/ai-features">Waitlist Prediction</Link>
                 <Link to="/waitlist">🎯 WL Predictor</Link>
                 <Link to="/ai-features">Smart Seat Selection</Link>
-                <Link to="/ai-features">Price Analysis</Link>
+                <Link to="/price-analysis">📊 Price Analysis</Link>
                 <Link to="/ai-features">Seat Exchange</Link>
-                <Link to="/ai-features">Journey Planner</Link>
+                <Link to="/journey-planner">🚂 Journey Planner</Link>
               </div>
             </li>
             {isAuthenticated && (

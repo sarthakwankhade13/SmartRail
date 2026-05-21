@@ -10,6 +10,8 @@ import PNRStatus from './pages/PNRStatus';
 import Dashboard from './pages/Dashboard';
 import AIFeatures from './pages/AIFeatures';
 import WaitlistPredictor from './pages/WaitlistPredictor';
+import PriceAnalysis from './pages/PriceAnalysis';
+import JourneyPlanner from './pages/JourneyPlanner';
 import './App.css';
 
 function App() {
@@ -38,6 +40,8 @@ function App() {
           <Route path="/dashboard" element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" />} />
           <Route path="/ai-features" element={isAuthenticated ? <AIFeatures /> : <Navigate to="/login" />} />
           <Route path="/waitlist" element={isAuthenticated ? <WaitlistPredictor /> : <Navigate to="/login" />} />
+          <Route path="/price-analysis" element={isAuthenticated ? <PriceAnalysis /> : <Navigate to="/login" />} />
+          <Route path="/journey-planner" element={<JourneyPlanner />} />
         </Routes>
       </div>
     </Router>
