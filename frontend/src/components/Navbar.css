@@ -132,14 +132,24 @@
   min-width: 220px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.15);
   border-radius: 8px;
-  overflow: hidden;
-  margin-top: 8px;
+  padding-top: 8px;
+  margin-top: 0;
   z-index: 1000;
+}
+
+/* Invisible bridge fills the gap so hover doesn't break */
+.dropdown-menu::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 0;
+  right: 0;
+  height: 8px;
 }
 
 .dropdown:hover .dropdown-menu {
   display: block;
-  animation: fadeIn 0.3s;
+  animation: fadeIn 0.2s;
 }
 
 @keyframes fadeIn {
@@ -159,11 +169,11 @@
   font-size: 13px;
   border-radius: 0;
   border-bottom: 1px solid #f3f4f6;
+  display: block;
 }
 
-.dropdown-menu a:last-child {
-  border-bottom: none;
-}
+.dropdown-menu a:first-child { border-radius: 8px 8px 0 0; }
+.dropdown-menu a:last-child  { border-bottom: none; border-radius: 0 0 8px 8px; }
 
 .dropdown-menu a:hover {
   background: #f3f4f6;

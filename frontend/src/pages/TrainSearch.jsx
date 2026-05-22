@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './TrainSearch.css';
 
-const API_URL = process.env.REACT_APP_API_URL;
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 function TrainSearch() {
   const [searchParams] = useSearchParams();
@@ -17,6 +17,7 @@ function TrainSearch() {
   const [showAiOptimizer, setShowAiOptimizer] = useState(false);
   const [filterClass, setFilterClass] = useState('all');
   const [sortBy, setSortBy] = useState('departure');
+  const [selectedClasses, setSelectedClasses] = useState({}); // trainNumber -> selectedClass
   const [searchForm, setSearchForm] = useState({
     source: '',
     destination: '',
@@ -115,12 +116,17 @@ function TrainSearch() {
     }
   };
 
-  const handleBook = (trainNumber, classType) => {
+  const handleBook = (trainNumber) => {
     const token = localStorage.getItem('token');
     if (!token) { navigate('/login'); return; }
+    const cls = selectedClasses[trainNumber] || searchParams.get('class') || 'SL';
     const params = new URLSearchParams(searchParams);
-    if (classType) params.set('class', classType);
+    params.set('class', cls);
     navigate(`/book/${trainNumber}?${params.toString()}`);
+  };
+
+  const handleSelectClass = (trainNumber, cls) => {
+    setSelectedClasses(prev => ({ ...prev, [trainNumber]: cls }));
   };
 
   const handleSearchFormSubmit = (e) => {
@@ -416,26 +422,32 @@ function TrainSearch() {
                         .sort((a, b) => a[1].totalFare - b[1].totalFare)
                         .map(([cls, f]) => {
                           const availability = f.availability || 'AVAIL';
-                          let availText = 'Avail';
-                          let availClass = 'avail';
-                          
-                          if (availability === 'WL') {
-                            availText = `WL ${f.waitlist_number || 1}`;
-                            availClass = 'wl';
+                          const isSelected = (selectedClasses[train.train_number] || searchParams.get('class') || 'SL') === cls;
+                          const isAvailable = availability === 'AVAIL';
+
+                          let availText = '';
+                          let availClass = '';
+                          if (availability === 'AVAIL') {
+                            availText = 'Available';
+                            availClass = 'avail';
                           } else if (availability === 'RAC') {
-                            availText = `RAC ${f.rac_number || 1}`;
+                            availText = `RAC ${f.rac_number || ''}`;
                             availClass = 'rac';
+                          } else if (availability === 'WL') {
+                            availText = `WL ${f.waitlist_number || ''}`;
+                            availClass = 'wl';
                           }
-                          
+
                           return (
                             <div
                               key={cls}
-                              className={`fare-cell ${searchParams.get('class') === cls ? 'selected-class' : ''}`}
+                              className={`fare-cell ${isSelected ? 'selected-class' : ''} ${availClass}`}
+                              onClick={() => handleSelectClass(train.train_number, cls)}
                               title={`Base: ₹${f.baseFare} | Res: ₹${f.reservationCharge} | SF: ₹${f.superfastCharge} | GST: ₹${f.gst}`}
                             >
                               <span className="fare-class">{cls}</span>
                               <span className="fare-amount">₹{f.totalFare}</span>
-                              <span className={`fare-avail ${availClass}`}>{availText}</span>
+                              <span className={`fare-avail-badge ${availClass}`}>{availText}</span>
                             </div>
                           );
                         })}
@@ -451,17 +463,9 @@ function TrainSearch() {
                 <div className="train-card-actions">
                   <button
                     className="btn btn-primary"
-                    onClick={() => handleBook(train.train_number, searchParams.get('class'))}
-                    disabled={train.available_seats === 0}
+                    onClick={() => handleBook(train.train_number)}
                   >
-                    {train.available_seats > 0 ? 'Book Now' : 'Sold Out'}
-                  </button>
-                  <button
-                    className="btn btn-wl"
-                    onClick={() => navigate(`/waitlist?train=${train.train_number}&date=${searchParams.get('date')}&class=${searchParams.get('class')}`)}
-                    title="Check waitlist confirmation probability"
-                  >
-                    🎯 Check WL
+                    Book Now — {selectedClasses[train.train_number] || searchParams.get('class') || 'SL'}
                   </button>
                 </div>
               </div>

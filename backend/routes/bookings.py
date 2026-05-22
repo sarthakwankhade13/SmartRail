@@ -99,17 +99,73 @@ def book_ticket():
         )
         booking_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
 
+        # ── Allocate real seats from the seat map for CONFIRMED bookings ──────
+        allocated_seat_ids = []
+        allocated_coach = None
+
+        if booking_status == 'CONFIRMED':
+            try:
+                from services.seat_service import _ensure_coaches_exist
+                from models.seat import TrainCoach, Seat as SeatModel
+                from config.db import get_session as get_orm_session
+
+                orm_session = get_orm_session()
+                try:
+                    _ensure_coaches_exist(train_number, orm_session)
+
+                    # Find a coach matching the booked class type
+                    coach_obj = orm_session.query(TrainCoach).filter_by(
+                        train_number=train_number,
+                        coach_type=class_type
+                    ).first()
+
+                    print(f"[SmartRail] Seat alloc: train={train_number} class={class_type} coach={coach_obj}")
+
+                    if coach_obj:
+                        # Get available seats (not booked)
+                        available = orm_session.query(SeatModel).filter_by(
+                            coach_id=coach_obj.id,
+                            is_booked=False
+                        ).order_by(SeatModel.seat_number).limit(len(passengers) + 5).all()
+
+                        print(f"[SmartRail] Available seats: {len(available)}")
+
+                        # Assign one seat per passenger
+                        for i, _ in enumerate(passengers):
+                            if i < len(available):
+                                seat_obj = available[i]
+                                seat_obj.is_booked = True
+                                allocated_seat_ids.append(
+                                    f"{coach_obj.coach_name}/{seat_obj.seat_number}"
+                                )
+                                allocated_coach = coach_obj.coach_name
+                            else:
+                                allocated_seat_ids.append(None)
+
+                        orm_session.commit()
+                        print(f"[SmartRail] Allocated seats: {allocated_seat_ids}")
+                finally:
+                    orm_session.close()
+            except Exception as seat_err:
+                import traceback
+                print(f"[SmartRail] Seat allocation error: {seat_err}")
+                traceback.print_exc()
+
         # Track assigned seats to avoid duplicates
         assigned_seats = set()
-        for p in passengers:
+        for idx, p in enumerate(passengers):
             # Generate seat number or WL/RAC assignment
             if booking_status == 'CONFIRMED':
-                while True:
-                    seat_number = str(random.randint(1, 72))
-                    if seat_number not in assigned_seats:
-                        assigned_seats.add(seat_number)
-                        break
-                seat_assignment = seat_number
+                # Use real allocated seat if available, else fallback random
+                if idx < len(allocated_seat_ids) and allocated_seat_ids[idx]:
+                    seat_assignment = allocated_seat_ids[idx]
+                else:
+                    while True:
+                        seat_number = str(random.randint(1, 72))
+                        if seat_number not in assigned_seats:
+                            assigned_seats.add(seat_number)
+                            break
+                    seat_assignment = seat_number
             else:
                 # For WL/RAC, increment the number for each passenger
                 if booking_status == 'WL':
@@ -118,7 +174,7 @@ def book_ticket():
                 elif booking_status == 'RAC':
                     rac_number += 1
                     seat_assignment = f'RAC/{rac_number}'
-            
+
             conn.execute(
                 "INSERT INTO Passengers (booking_id, name, age, gender, seat_number, berth_preference) VALUES (?, ?, ?, ?, ?, ?)",
                 (booking_id, p['name'], p['age'], p['gender'], seat_assignment, p.get('berthPreference', 'Lower'))
@@ -131,9 +187,11 @@ def book_ticket():
             "bookingId": booking_id,
             "totalFare": total_fare,
             "trainName": train_name,
-            "bookingStatus": booking_status
+            "bookingStatus": booking_status,
+            "coachName": allocated_coach,
+            "allocatedSeats": allocated_seat_ids if booking_status == 'CONFIRMED' else [],
         }
-        
+
         if booking_status == 'WL':
             response_data["waitlistNumber"] = waitlist_number - len(passengers) + 1
         elif booking_status == 'RAC':
@@ -147,7 +205,94 @@ def book_ticket():
         conn.close()
 
 
+@bookings_bp.route('/cancel-booking', methods=['POST'])
+@auth_required
+def cancel_booking():
+    identity = get_jwt_identity()
+    user_id  = int(identity)
+    data     = request.get_json()
+    booking_id = data.get('bookingId')
+
+    if not booking_id:
+        return jsonify({'error': 'bookingId is required'}), 400
+
+    conn = get_connection()
+    try:
+        booking = conn.execute(
+            "SELECT * FROM Bookings WHERE booking_id = ? AND user_id = ?",
+            (booking_id, user_id)
+        ).fetchone()
+
+        if not booking:
+            return jsonify({'error': 'Booking not found'}), 404
+
+        if booking['booking_status'] == 'CANCELLED':
+            return jsonify({'error': 'Booking is already cancelled'}), 400
+
+        conn.execute(
+            "UPDATE Bookings SET booking_status = 'CANCELLED' WHERE booking_id = ?",
+            (booking_id,)
+        )
+        conn.commit()
+        return jsonify({'success': True, 'message': 'Booking cancelled successfully'}), 200
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+
+
 @bookings_bp.route('/pnr/<pnr_number>', methods=['GET'])
+def get_pnr_status(pnr_number):
+    """GET /api/pnr/<pnr_number> — used by Dashboard to expand passenger details."""
+    conn = get_connection()
+    try:
+        booking = conn.execute(
+            "SELECT * FROM Bookings WHERE pnr_number = ?", (pnr_number,)
+        ).fetchone()
+
+        if not booking:
+            return jsonify({"error": "PNR not found"}), 404
+
+        passengers = conn.execute(
+            "SELECT * FROM Passengers WHERE booking_id = ?", (booking['booking_id'],)
+        ).fetchall()
+
+        train = find_train_by_number(booking['train_id'])
+        train_name = train['properties'].get('name', booking['train_id']) if train else booking['train_id']
+
+        # Check if any passenger's seat was updated via exchange
+        # (exchange updates seat_number in Passengers table)
+        pax_list = []
+        for p in passengers:
+            seat_val = p['seat_number'] or '—'
+            # Detect if seat was exchanged: original random seats are plain integers,
+            # exchanged seats come from exchange_passengers which stores coach/seat strings
+            pax_list.append({
+                "name": p['name'],
+                "age": p['age'],
+                "gender": p['gender'],
+                "seatNumber": seat_val,
+                "berthPreference": p['berth_preference'],
+            })
+
+        return jsonify({
+            "pnrNumber": booking['pnr_number'],
+            "bookingStatus": booking['booking_status'],
+            "travelDate": booking['travel_date'],
+            "classType": booking['class_type'],
+            "totalFare": booking['total_fare'],
+            "trainNumber": booking['train_id'],
+            "trainName": train_name,
+            "sourceStation": booking['source_station_id'],
+            "destinationStation": booking['destination_station_id'],
+            "passengers": pax_list,
+        })
+    finally:
+        conn.close()
+
+
 def pnr_status(pnr_number):
     conn = get_connection()
     try:

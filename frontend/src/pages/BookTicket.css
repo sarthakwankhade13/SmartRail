@@ -1,107 +1,101 @@
-.booking-info {
-  background: #f8f9fa;
-  padding: 16px;
-  border-radius: 4px;
-  margin-bottom: 24px;
+/* ── Book Ticket Page ─────────────────────────────────────────────────────── */
+.bt-page { min-height: 100vh; background: #f1f5f9; font-family: 'Inter', system-ui, sans-serif; }
+
+.bt-hero {
+  background: linear-gradient(135deg, #0b1c4d 0%, #122d73 45%, #10348c 100%);
+  padding: 36px 24px 64px; text-align: center; position: relative; overflow: hidden;
+}
+.bt-hero-inner { position: relative; max-width: 600px; margin: 0 auto; }
+.bt-hero-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.18);
+  border-radius: 999px; padding: 5px 16px; font-size: .7rem; font-weight: 700;
+  color: #bfdbfe; letter-spacing: .08em; margin-bottom: 14px;
+}
+.bt-hero h1 { font-size: clamp(1.6rem,3vw,2.2rem); font-weight: 800; color: #fff; margin-bottom: 8px; }
+.bt-hero p  { font-size: .9rem; color: #93c5fd; }
+
+.bt-container { max-width: 1100px; margin: -40px auto 0; padding: 0 20px 48px; position: relative; z-index: 10; }
+.bt-layout { display: grid; grid-template-columns: 1fr 320px; gap: 20px; align-items: start; }
+@media (max-width: 860px) { .bt-layout { grid-template-columns: 1fr; } }
+
+/* Journey card */
+.bt-journey-card {
+  background: #fff; border-radius: 14px; padding: 18px 20px;
+  box-shadow: 0 2px 12px rgba(0,0,0,.07); margin-bottom: 16px;
+}
+.bt-journey-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.bt-journey-station { display: flex; flex-direction: column; gap: 2px; }
+.bt-journey-station--right { text-align: right; }
+.bt-station-label { font-size: .65rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: .06em; }
+.bt-station-code  { font-size: 1.4rem; font-weight: 800; color: #1e293b; }
+.bt-journey-arrow { flex: 1; display: flex; align-items: center; gap: 6px; justify-content: center; }
+.bt-arrow-line    { flex: 1; height: 2px; background: #e2e8f0; }
+.bt-journey-meta  { display: flex; gap: 12px; flex-wrap: wrap; }
+.bt-journey-meta span {
+  font-size: .78rem; font-weight: 600; color: #475569;
+  background: #f1f5f9; padding: 3px 10px; border-radius: 999px;
 }
 
-.booking-info p {
-  margin: 8px 0;
-  color: #666;
+/* Passenger card */
+.bt-passenger-card {
+  background: #fff; border-radius: 14px; padding: 20px;
+  box-shadow: 0 2px 12px rgba(0,0,0,.07); margin-bottom: 14px;
+}
+.bt-passenger-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.bt-passenger-header h3 { font-size: .95rem; font-weight: 700; color: #1e293b; margin: 0; }
+.bt-remove-btn {
+  font-size: .75rem; color: #ef4444; background: #fff1f2;
+  border: 1px solid #fecdd3; border-radius: 6px; padding: 4px 10px; cursor: pointer;
+}
+.bt-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 500px) { .bt-form-grid { grid-template-columns: 1fr; } }
+.bt-field { display: flex; flex-direction: column; gap: 5px; }
+.bt-field--wide { grid-column: 1 / -1; }
+.bt-field label { font-size: .7rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: .05em; }
+.bt-field input, .bt-field select {
+  padding: 10px 12px; border: 1.5px solid #e2e8f0; border-radius: 9px;
+  font-size: .9rem; color: #1e293b; background: #f8fafc; outline: none;
+  transition: border-color .2s;
+}
+.bt-field input:focus, .bt-field select:focus { border-color: #667eea; background: #fff; }
+
+.bt-add-btn {
+  width: 100%; padding: 11px; border: 2px dashed #cbd5e1; border-radius: 10px;
+  background: transparent; color: #64748b; font-size: .88rem; font-weight: 600;
+  cursor: pointer; margin-bottom: 16px; transition: all .18s;
+}
+.bt-add-btn:hover { border-color: #667eea; color: #667eea; background: #eef2ff; }
+
+.bt-error {
+  padding: 10px 14px; background: #fff1f2; border: 1px solid #fecdd3;
+  border-radius: 8px; color: #be123c; font-size: .88rem; margin-bottom: 14px;
 }
 
-.passenger-form {
-  border: 1px solid #ddd;
-  padding: 16px;
-  border-radius: 4px;
-  margin-bottom: 16px;
+.bt-proceed-btn {
+  width: 100%; padding: 14px; background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff; border: none; border-radius: 12px; font-size: 1rem; font-weight: 700;
+  cursor: pointer; transition: opacity .2s, transform .15s;
 }
+.bt-proceed-btn:hover { opacity: .92; transform: translateY(-1px); }
 
-.passenger-form h4 {
-  margin-bottom: 16px;
-  color: #333;
+/* Sidebar */
+.bt-fare-card, .bt-info-card {
+  background: #fff; border-radius: 14px; padding: 18px 20px;
+  box-shadow: 0 2px 12px rgba(0,0,0,.07); margin-bottom: 14px;
 }
-
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
+.bt-fare-card h3, .bt-info-card h4 { font-size: .95rem; font-weight: 700; color: #1e293b; margin: 0 0 14px; }
+.bt-loading { font-size: .85rem; color: #94a3b8; }
+.bt-fare-route { font-size: .82rem; color: #64748b; margin-bottom: 12px; display: flex; gap: 6px; flex-wrap: wrap; }
+.bt-fare-arrow { color: #94a3b8; }
+.bt-fare-rows { display: flex; flex-direction: column; gap: 8px; }
+.bt-fare-row { display: flex; justify-content: space-between; font-size: .82rem; color: #475569; }
+.bt-fare-per { font-weight: 600; color: #1e293b; padding-top: 8px; border-top: 1px solid #f1f5f9; }
+.bt-fare-total {
+  font-size: .95rem; font-weight: 800; color: #1e293b;
+  padding-top: 8px; border-top: 2px solid #e2e8f0;
 }
-
-.btn-secondary {
-  margin-right: 12px;
-  margin-bottom: 16px;
-}
-
-/* ── Fare Breakdown Card ── */
-.fare-breakdown-card {
-  background: linear-gradient(135deg, #f0f4ff, #fafbff);
-  border: 1.5px solid #c3d0f5;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 24px;
-}
-
-.fare-breakdown-card h3 {
-  margin: 0 0 12px;
-  color: #2d3748;
-  font-size: 1rem;
-}
-
-.fare-route {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 600;
-  color: #4a5568;
-  margin-bottom: 16px;
-  font-size: 0.9rem;
-}
-
-.fare-arrow {
-  color: #667eea;
-  font-size: 0.8rem;
-}
-
-.fare-breakdown-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.fare-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.88rem;
-  color: #4a5568;
-  padding: 4px 0;
-  border-bottom: 1px dashed #e2e8f0;
-}
-
-.fare-row span:last-child {
-  font-weight: 600;
-  color: #2d3748;
-}
-
-.fare-total {
-  border-top: 2px solid #c3d0f5;
-  border-bottom: none;
-  padding-top: 8px;
-  font-weight: 600;
-  color: #2d3748;
-}
-
-.fare-grand {
-  background: #667eea;
-  color: white !important;
-  padding: 10px 12px;
-  border-radius: 8px;
-  margin-top: 6px;
-  border: none;
-  font-weight: 700;
-  font-size: 0.95rem;
-}
-
-.fare-grand span {
-  color: white !important;
-}
+.bt-fare-na { font-size: .82rem; color: #94a3b8; }
+.bt-info-card ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.bt-info-card li { font-size: .78rem; color: #64748b; padding-left: 14px; position: relative; }
+.bt-info-card li::before { content: '•'; position: absolute; left: 0; color: #667eea; }

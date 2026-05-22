@@ -33,12 +33,11 @@ function Navbar() {
             <li className="dropdown">
               <span className="dropdown-toggle">AI FEATURES ▼</span>
               <div className="dropdown-menu">
-                <Link to="/ai-features">Waitlist Prediction</Link>
+                <Link to="/smart-seat">💺 Smart Seat Selection</Link>
                 <Link to="/waitlist">🎯 WL Predictor</Link>
-                <Link to="/ai-features">Smart Seat Selection</Link>
                 <Link to="/price-analysis">📊 Price Analysis</Link>
-                <Link to="/ai-features">Seat Exchange</Link>
                 <Link to="/journey-planner">🚂 Journey Planner</Link>
+                <Link to="/seat-exchange">🔄 Seat Exchange</Link>
               </div>
             </li>
             {isAuthenticated && (

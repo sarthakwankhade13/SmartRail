@@ -24,19 +24,31 @@ from routes.bookings import bookings_bp
 from routes.ai import ai_bp
 from routes.realtime import realtime_bp
 from routes.journey import journey_bp
+from routes.exchange import exchange_bp
+from routes.seats import seats_bp
+from routes.pnr_routes import pnr_bp
 
-app.register_blueprint(auth_bp, url_prefix='/api/auth')
-app.register_blueprint(trains_bp, url_prefix='/api')
-app.register_blueprint(bookings_bp, url_prefix='/api')
-app.register_blueprint(ai_bp, url_prefix='/api/ai')
-app.register_blueprint(realtime_bp, url_prefix='/api/realtime')
+app.register_blueprint(auth_bp,    url_prefix='/api/auth')
+app.register_blueprint(trains_bp,  url_prefix='/api')
+app.register_blueprint(bookings_bp,url_prefix='/api')
+app.register_blueprint(ai_bp,      url_prefix='/api/ai')
+app.register_blueprint(realtime_bp,url_prefix='/api/realtime')
 app.register_blueprint(journey_bp, url_prefix='/api/journey')
+app.register_blueprint(exchange_bp,url_prefix='/api/exchange')
+app.register_blueprint(seats_bp,   url_prefix='/api/seats')
+app.register_blueprint(pnr_bp,     url_prefix='/api/pnr')
 
 
 @app.route('/api/health')
 def health():
     return jsonify({"status": "ok", "message": "RailAI API is running"})
 
+# Initialize Database tables
+try:
+    from scripts.init_database import init
+    init()
+except Exception as e:
+    print(f"[SmartRail] DB init warning: {e}")
 
 # Pre-warm all data indexes on startup (runs in background thread)
 import threading
@@ -48,7 +60,7 @@ def _warm_cache():
         _get_trains_by_number()
         _get_station_trains_index()
         _get_station_name_to_code()
-        print("Cache warm — ready.")
+        print("Cache warm - ready.")
     except Exception as e:
         print(f"Cache warm failed: {e}")
 

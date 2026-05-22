@@ -6,3 +6,8 @@ python-dotenv==1.0.1
 sqlalchemy==2.0.36
 pymysql==1.1.0
 cryptography==42.0.2
+requests>=2.31.0
+
+# ML / Data Science
+numpy>=1.26.0
+scikit-learn>=1.4.0

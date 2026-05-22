@@ -282,39 +282,56 @@
 .fare-table {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 12px;
+  gap: 8px;
+  margin-top: 14px;
 }
 
 .fare-cell {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 6px 10px;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 8px;
+  padding: 8px 12px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
   cursor: pointer;
-  min-width: 60px;
-  transition: all 0.18s;
+  min-width: 72px;
+  transition: all 0.2s ease;
   background: #fff;
+  position: relative;
 }
 
 .fare-cell:hover {
   border-color: #667eea;
   background: #f0f4ff;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
 }
 
 .fare-cell.selected-class {
   border-color: #667eea;
-  background: #667eea;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.35);
 }
 
 .fare-cell.selected-class .fare-class,
 .fare-cell.selected-class .fare-amount,
-.fare-cell.selected-class .fare-avail {
+.fare-cell.selected-class .fare-avail-badge {
   color: white;
+}
+
+.fare-cell.selected-class .fare-avail-badge.avail {
+  background: rgba(255,255,255,0.25);
+  color: #fff;
+}
+.fare-cell.selected-class .fare-avail-badge.wl {
+  background: rgba(255,255,255,0.25);
+  color: #fff;
+}
+.fare-cell.selected-class .fare-avail-badge.rac {
+  background: rgba(255,255,255,0.25);
+  color: #fff;
 }
 
 .fare-class {
@@ -322,27 +339,42 @@
   font-weight: 700;
   color: #4a5568;
   letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
 .fare-amount {
-  font-size: 0.88rem;
+  font-size: 0.92rem;
   font-weight: 700;
   color: #2d3748;
-  margin: 2px 0;
+  margin: 3px 0;
 }
 
-.fare-avail {
-  font-size: 0.65rem;
-  color: #48bb78;
-  font-weight: 600;
+/* Availability badge — prominent pill */
+.fare-avail-badge {
+  display: inline-block;
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  margin-top: 2px;
 }
 
-.fare-avail.wl {
-  color: #e53e3e;
+.fare-avail-badge.avail {
+  background: #c6f6d5;
+  color: #22543d;
 }
 
-.fare-avail.rac {
-  color: #d69e2e;
+.fare-avail-badge.wl {
+  background: #fed7d7;
+  color: #9b2c2c;
+}
+
+.fare-avail-badge.rac {
+  background: #fefcbf;
+  color: #975a16;
 }
 
 .arrow-block {
@@ -373,17 +405,10 @@
   gap: 12px;
 }
 
-.train-card-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
-
-.btn-wl {
-  padding: 8px 16px;
-  background: linear-gradient(135deg, #f6ad55, #ed8936);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.85rem;
-  transition: opacity 0.2s;
+.train-card-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 8px;
 }
-.btn-wl:hover { opacity: 0.88; }
+

@@ -35,7 +35,7 @@ function AIFeatures() {
   };
 
   // ── Forms ──────────────────────────────────────────────────────────────────
-  const [waitlistForm, setWaitlistForm] = useState({ trainNumber: '', travelDate: '', waitlistPosition: '', classType: 'SL' });
+  const [waitlistForm, setWaitlistForm] = useState({ trainNumber: '', travelDate: '', waitlistPosition: '', classType: 'SL', quota: 'GNWL' });
   const [routeForm, setRouteForm]       = useState({ sourceCode: '', destinationCode: '', travelDate: '' });
   const [upgradeForm, setUpgradeForm]   = useState({ trainNumber: '', travelDate: '', classType: 'SL' });
   const [seatForm, setSeatForm]         = useState({ trainNumber: '', preferences: [] });
@@ -58,10 +58,34 @@ function AIFeatures() {
       </div>
       <div className="result-details">
         <p><strong>Status:</strong> {r.status}</p>
+        <p><strong>Risk Level:</strong> <span style={{ color: r.riskLevel === 'Low' ? '#276749' : r.riskLevel === 'Medium' ? '#c05621' : '#c53030', fontWeight: 700 }}>{r.riskLevel || '—'}</span></p>
+        <p><strong>RAC Probability:</strong> {r.racProbability || '—'}%</p>
+        <p><strong>Confidence:</strong> {r.confidenceScore || '—'}%</p>
         <p><strong>Days Left:</strong> {r.daysLeft}</p>
+        <p><strong>Expected Confirmation:</strong> {r.expectedConfirmationTime || '—'}</p>
+        <p><strong>Demand:</strong> {r.demandLevel || '—'}</p>
         <p><strong>Class Factor:</strong> {r.classFactor}</p>
         <p className="advice-text">💡 {r.advice}</p>
+        {r.engine === 'ml' && <p style={{ fontSize: '0.75rem', color: '#a0aec0', marginTop: 8 }}>🤖 Powered by ML ensemble model</p>}
       </div>
+      {r.explanation && r.explanation.length > 0 && (
+        <div style={{ marginTop: 16 }}>
+          <strong style={{ fontSize: '0.85rem', color: '#4a5568' }}>🔍 Key Factors:</strong>
+          <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {r.explanation.slice(0, 5).map((item, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.8rem' }}>
+                <span style={{ color: item.direction === 'positive' ? '#276749' : '#c53030', fontWeight: 700, width: 20 }}>
+                  {item.direction === 'positive' ? '▲' : '▼'}
+                </span>
+                <span style={{ flex: 1, color: '#4a5568' }}>{item.label}</span>
+                <span style={{ color: item.direction === 'positive' ? '#276749' : '#c53030', fontWeight: 600 }}>
+                  {item.direction === 'positive' ? '+' : '-'}{item.impact.toFixed(1)}%
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -138,105 +162,115 @@ function AIFeatures() {
   );
 
   const renderPriceAnalysis = (r) => {
-    const last30 = (r.priceHistory || []).slice(-30);
-    const maxPrice = Math.max(...last30.map(h => h.price), r.currentPrice, 1);
+    // Backend returns: priceHistory[], futurePrices[], bookingWindow{}, demand{}
+    const history  = (r.priceHistory  || []).slice(-30);
+    const forecast = r.futurePrices   || [];
+    const bw       = r.bookingWindow  || {};
+    const demand   = r.demand         || {};
 
-    const trendIcon = r.trend === 'up' ? '📈' : r.trend === 'down' ? '📉' : '➡️';
-    const trendClass = r.trend === 'up' ? 'trend-up' : r.trend === 'down' ? 'trend-down' : 'trend-stable';
+    const allPrices = [...history.map(h => h.price), ...forecast.map(f => f.price)];
+    const maxPrice  = Math.max(...allPrices, 1);
+    const minPrice  = Math.min(...allPrices, bw.lowestPrice || Infinity);
+    const avgPrice  = allPrices.length
+      ? Math.round(allPrices.reduce((a, b) => a + b, 0) / allPrices.length)
+      : 0;
 
-    const windowColor = r.bestBookingWindow?.color || 'blue';
+    const urgencyColor = { high: 'red', medium: 'orange', low: 'green' }[bw.urgency] || 'blue';
+    const urgencyIcon  = { high: '🔴', medium: '⚠️', low: '✅' }[bw.urgency] || '🔵';
+
+    const demandColor = {
+      'Very High': '#e53e3e', 'High': '#ed8936',
+      'Moderate': '#4299e1', 'Low': '#48bb78',
+    }[demand.demandLevel] || '#a0aec0';
 
     return (
       <div className="price-analysis-result">
 
-        {/* Festival Alert */}
-        {r.festivalAlert && (
-          <div className="festival-alert">
-            {r.festivalAlert}
-          </div>
-        )}
-
-        {/* Top stats row */}
+        {/* Stats row */}
         <div className="price-stats-grid">
           <div className="price-stat current">
             <span className="stat-label">Current Price</span>
-            <span className="stat-value">₹{r.currentPrice}</span>
-            <span className={`stat-trend ${trendClass}`}>{trendIcon} {Math.abs(r.trendPercent)}% vs avg</span>
+            <span className="stat-value">₹{bw.currentPrice || r.baseFare || '—'}</span>
           </div>
           <div className="price-stat">
-            <span className="stat-label">Lowest (90d)</span>
-            <span className="stat-value green">₹{r.lowestPrice}</span>
+            <span className="stat-label">Lowest</span>
+            <span className="stat-value green">₹{Math.min(minPrice, bw.lowestPrice || minPrice)}</span>
           </div>
           <div className="price-stat">
-            <span className="stat-label">Highest (90d)</span>
-            <span className="stat-value red">₹{r.highestPrice}</span>
+            <span className="stat-label">Highest</span>
+            <span className="stat-value red">₹{maxPrice}</span>
           </div>
           <div className="price-stat">
-            <span className="stat-label">30-day Avg</span>
-            <span className="stat-value">₹{r.averagePrice}</span>
+            <span className="stat-label">Average</span>
+            <span className="stat-value">₹{avgPrice}</span>
           </div>
         </div>
 
-        {/* Booking window badge */}
-        <div className={`booking-window-badge bw-${windowColor}`}>
-          <span className="bw-icon">
-            {windowColor === 'green' ? '✅' : windowColor === 'blue' ? '🔵' : windowColor === 'orange' ? '⚠️' : '🔴'}
-          </span>
+        {/* Booking window */}
+        <div className={`booking-window-badge bw-${urgencyColor}`}>
+          <span className="bw-icon">{urgencyIcon}</span>
           <div>
-            <strong>{r.bestBookingWindow?.badge}</strong>
-            <p>{r.bestBookingWindow?.message}</p>
+            <strong>Best day to book: {bw.bestDayToBook}</strong>
+            <p>{bw.recommendation}</p>
           </div>
-          <span className="bw-days">{r.daysLeft}d left</span>
+          {bw.savingsAmount > 0 && (
+            <span className="bw-days">Save ₹{bw.savingsAmount}</span>
+          )}
         </div>
 
-        {/* Price history bar chart — last 30 days */}
-        <div className="price-chart-section">
-          <h4>📊 Price History — Last 30 Days</h4>
-          <div className="price-bar-chart">
-            {last30.map((h, i) => {
-              const heightPct = Math.round((h.price / maxPrice) * 100);
-              const isCurrent = i === last30.length - 1;
-              const barClass = h.label === 'Festival' ? 'bar-festival'
-                : h.label === 'Weekend' ? 'bar-weekend'
-                : isCurrent ? 'bar-current'
-                : 'bar-normal';
-              return (
-                <div key={i} className="bar-col" title={`${h.date}: ₹${h.price}${h.label ? ' (' + h.label + ')' : ''}`}>
-                  <div
-                    className={`price-bar ${barClass}`}
-                    style={{ height: `${heightPct}%` }}
-                  />
-                  {i % 7 === 0 && (
-                    <span className="bar-date-label">
-                      {new Date(h.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
-                    </span>
-                  )}
-                </div>
-              );
-            })}
+        {/* Demand */}
+        {demand.demandLevel && (
+          <div style={{ padding: '12px 16px', background: '#f7fafc', borderRadius: 10, display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+            <span style={{ fontWeight: 700, color: demandColor }}>{demand.demandLevel} Demand</span>
+            <span style={{ color: '#718096', fontSize: '0.85rem' }}>Occupancy: {demand.occupancyPercent}%</span>
+            <span style={{ color: '#718096', fontSize: '0.85rem' }}>{demand.availabilityTrend}</span>
+            {(demand.peakFactors || []).map((f, i) => (
+              <span key={i} style={{ padding: '2px 8px', background: '#faf5ff', color: '#6b46c1', borderRadius: 10, fontSize: '0.75rem', fontWeight: 600 }}>{f}</span>
+            ))}
           </div>
-          <div className="chart-legend">
-            <span className="legend-item"><span className="legend-dot normal" />Normal</span>
-            <span className="legend-item"><span className="legend-dot weekend" />Weekend</span>
-            <span className="legend-item"><span className="legend-dot festival" />Festival</span>
-            <span className="legend-item"><span className="legend-dot current" />Today</span>
-          </div>
-        </div>
+        )}
 
-        {/* Price forecast — next 14 days */}
-        {r.priceForecast && r.priceForecast.length > 0 && (
+        {/* Price history chart */}
+        {history.length > 0 && (
           <div className="price-chart-section">
-            <h4>🔮 Price Forecast — Next {r.priceForecast.length} Days</h4>
-            <div className="price-bar-chart forecast-chart">
-              {r.priceForecast.map((f, i) => {
-                const fMax = Math.max(...r.priceForecast.map(x => x.price), 1);
-                const heightPct = Math.round((f.price / fMax) * 100);
-                const barClass = f.label === 'Festival' ? 'bar-festival'
-                  : f.label === 'Weekend' ? 'bar-weekend'
-                  : 'bar-forecast';
+            <h4>📊 Price History — Last 30 Days</h4>
+            <div className="price-bar-chart">
+              {history.map((h, i) => {
+                const heightPct = Math.max(Math.round((h.price / maxPrice) * 100), 4);
+                const d = new Date(h.date);
+                const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+                const barClass = isWeekend ? 'bar-weekend' : i === history.length - 1 ? 'bar-current' : 'bar-normal';
                 return (
-                  <div key={i} className="bar-col" title={`${f.date}: ₹${f.price}${f.label ? ' (' + f.label + ')' : ''}`}>
+                  <div key={i} className="bar-col" title={`${h.date}: ₹${h.price}`}>
                     <div className={`price-bar ${barClass}`} style={{ height: `${heightPct}%` }} />
+                    {i % 7 === 0 && (
+                      <span className="bar-date-label">
+                        {d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <div className="chart-legend">
+              <span className="legend-item"><span className="legend-dot normal" />Normal</span>
+              <span className="legend-item"><span className="legend-dot weekend" />Weekend</span>
+              <span className="legend-item"><span className="legend-dot current" />Today</span>
+            </div>
+          </div>
+        )}
+
+        {/* Forecast chart */}
+        {forecast.length > 0 && (
+          <div className="price-chart-section">
+            <h4>🔮 Price Forecast — Next {forecast.length} Days</h4>
+            <div className="price-bar-chart forecast-chart">
+              {forecast.map((f, i) => {
+                const fMax = Math.max(...forecast.map(x => x.price), 1);
+                const heightPct = Math.max(Math.round((f.price / fMax) * 100), 4);
+                return (
+                  <div key={i} className="bar-col" title={`${f.date}: ₹${f.price}`}>
+                    <div className="price-bar bar-forecast" style={{ height: `${heightPct}%` }} />
                     {i % 3 === 0 && (
                       <span className="bar-date-label">
                         {new Date(f.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
@@ -252,7 +286,7 @@ function AIFeatures() {
         {/* Recommendation */}
         <div className="price-recommendation">
           <span className="rec-icon">💡</span>
-          <p>{r.recommendation}</p>
+          <p>{bw.recommendation || 'Analyze a train to get booking recommendations.'}</p>
         </div>
 
       </div>
@@ -292,7 +326,7 @@ function AIFeatures() {
           {active === 'waitlist' && (
             <>
               <h3>🎯 Waitlist Confirmation Predictor</h3>
-              <p className="feature-desc">Uses a logistic regression formula with class-sensitivity to predict if your waitlisted ticket will confirm.</p>
+              <p className="feature-desc">ML-powered prediction using ensemble model — GradientBoosting + RandomForest + LogisticRegression.</p>
               <form onSubmit={(e) => { e.preventDefault(); call('waitlist-predict', waitlistForm); }}>
                 <div className="form-grid-2">
                   <div className="form-group">
@@ -301,13 +335,14 @@ function AIFeatures() {
                       onChange={e => setWaitlistForm({...waitlistForm, trainNumber: e.target.value})} required />
                   </div>
                   <div className="form-group">
-                    <label>Waitlist Position</label>
-                    <input type="number" min="1" value={waitlistForm.waitlistPosition}
+                    <label>Waitlist Position (WL#)</label>
+                    <input type="number" min="1" max="500" value={waitlistForm.waitlistPosition} placeholder="e.g. 12"
                       onChange={e => setWaitlistForm({...waitlistForm, waitlistPosition: e.target.value})} required />
                   </div>
                   <div className="form-group">
                     <label>Travel Date</label>
                     <input type="date" value={waitlistForm.travelDate}
+                      min={new Date().toISOString().split('T')[0]}
                       onChange={e => setWaitlistForm({...waitlistForm, travelDate: e.target.value})} required />
                   </div>
                   <div className="form-group">
@@ -318,6 +353,16 @@ function AIFeatures() {
                       <option value="2A">AC 2 Tier (2A)</option>
                       <option value="1A">AC First Class (1A)</option>
                       <option value="CC">Chair Car (CC)</option>
+                      <option value="2S">Second Sitting (2S)</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Booking Quota</label>
+                    <select value={waitlistForm.quota} onChange={e => setWaitlistForm({...waitlistForm, quota: e.target.value})}>
+                      <option value="GNWL">GNWL — General Waitlist</option>
+                      <option value="PQWL">PQWL — Pooled Quota</option>
+                      <option value="RLWL">RLWL — Remote Location</option>
+                      <option value="TQWL">TQWL — Tatkal Quota</option>
                     </select>
                   </div>
                 </div>
