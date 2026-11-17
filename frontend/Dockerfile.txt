@@ -1,0 +1,31 @@
+
+# Stage 1: Build React application
+FROM node:22-alpine AS build
+
+WORKDIR /app
+
+# Copy dependency files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm ci
+
+# Copy React source code
+COPY . .
+
+# Configure backend API URL
+ARG REACT_APP_API_URL=http://localhost:5000/api
+ENV REACT_APP_API_URL=$REACT_APP_API_URL
+
+# Build production application
+RUN npm run build
+
+
+# Stage 2: Serve using Nginx
+FROM nginx:alpine
+
+COPY --from=build /app/build /usr/share/nginx/html
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
